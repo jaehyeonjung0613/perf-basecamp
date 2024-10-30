@@ -9,11 +9,13 @@ module.exports = {
   output: {
     filename: 'bundle.js',
     path: path.join(__dirname, '/dist'),
-    clean: true
+    clean: true,
+    publicPath: '/'
   },
   devServer: {
     hot: true,
     open: true,
+    openPage: ['perf-basecamp'],
     historyApiFallback: true
   },
   devtool: 'source-map',
