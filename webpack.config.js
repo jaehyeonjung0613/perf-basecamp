@@ -5,6 +5,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
 
 module.exports = {
   entry: './src/index.tsx',
@@ -16,6 +17,7 @@ module.exports = {
     publicPath: '/'
   },
   devServer: {
+    compress: true,
     hot: true,
     open: true,
     openPage: ['perf-basecamp'],
@@ -33,6 +35,9 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css'
+    }),
+    new CompressionPlugin({
+      test: /\.*(\?.*)?$/i
     })
   ],
   module: {
