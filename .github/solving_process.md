@@ -121,3 +121,68 @@ npm run build:dev
 |       stat_1       | <img alt="stat_0_profile" width=1280 src="https://github.com/user-attachments/assets/0ea30922-ea80-4922-9e3e-ba632a6e3a94"/> |
 
 bundle 크기가 절반 정도 감소됨.
+
+## 2. gzip
+
+```js
+// webpack.config.js
+
+module.exports = {
+  devServer: {
+    compress: true
+  }
+};
+```
+
+webpack dev server에 gzip 기능을 부여하기 위한 설정.
+
+```bash
+npm i -D compression-webpack-plugin
+```
+
+```js
+// webpack.config.js
+
+const CompressionPlugin = require('compression-webpack-plugin');
+
+module.exports = {
+  plugins: [
+    new CompressionPlugin({
+      test: /\.*(\?.*)?$/i
+    })
+  ]
+};
+```
+
+```json
+// package.json
+
+{
+  "scripts": {
+    "build:dev": "webpack --mode=development --profile --json > stat_2.json"
+  }
+}
+```
+
+```bash
+npm run build:dev
+```
+
+결과를 확인하기 전에 CompressionPlugin(정적 리소스를 gzip으로 압축해주는 플러그인)을 사용하여 실제 서버에서 gzip 일어났을 때 압축된 파일을 미리 확인.
+
+<img alt="gziped_bundle" width=300 src="https://github.com/user-attachments/assets/adde08c4-bf1b-4a34-9496-c3bfce101fb1">
+
+압축된 번들 리소스가 생성되고 크기가 감소됨.
+
+| stat\_`{풀이버전}` |   Name    | Status |  Type  |    Initiator     |  Size  | Time  |
+| :----------------: | :-------: | :----: | :----: | :--------------: | :----: | :---: |
+|       stat_1       | bundle.js |  200   | script | perf-basecamp:14 | 1.2 MB | 23 ms |
+|       stat_2       | bundle.js |  200   | script | perf-basecamp:14 | 335 kB | 75 ms |
+
+동일한 환경(pc, network, browser, disable cache)에서 브라우저 devTool Network로 비교해봤을 때 번들 크기가 3배 정도 감소(대신 server gzip, client ungzip 과정 때문에 time은 증가).
+
+사실 해당 설정은 webpack 기능이라기 보단 web server 설정에 가깝.
+
+해당 테스트는 webpack dev server로 비교했지만 실제 배포할땐 배포 서버 설정에 따라 기능 제공여부가 달라짐.
+
+다행이 github pages service는 gzip 기능을 제공함.
