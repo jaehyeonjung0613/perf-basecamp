@@ -51,3 +51,73 @@ module.exports = {
 페이지 번들 리소스 절대경로 설정.(Search 페이지 새로고침 시 리소스 못 불러오는 현상 조치)
 
 dev server 기본 페이지 설정.(url 수정 귀찮...)
+
+## 1. css/js minify, uglify
+
+```js
+// webpack.config.js
+
+module.exports = {
+  optimization: {
+    minimize: true
+  }
+};
+```
+
+webpack은 기본으로 js의 minify, uglify minimizer(TerserWebpackPlugin)가 있기 때문에 minimize만 설정.(production 환경에선 기본으로 true)
+
+```bash
+npm i -D mini-css-extract-plugin css-minimizer-webpack-plugin
+```
+
+```js
+// webpack.config.js
+
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+
+module.exports = {
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+      chunkFilename: '[id].css'
+    })
+  ],
+  module: {
+    rules: [
+      {
+        test: /\.css$/i,
+        use: [MiniCssExtractPlugin.loader, 'css-loader']
+      }
+    ]
+  },
+  optimization: {
+    minimizer: [`...`, new CssMinimizerPlugin()]
+  }
+};
+```
+
+MiniCssExtractPlugin으로 inner css 적용되어있던 부분을 chunk 단위로 번들링되도록 설정.
+
+CssMinimizerPlugin으로 css 최소화 적용.
+
+```json
+// package.json
+
+{
+  "scripts": {
+    "build:dev": "webpack --mode=development --profile --json > stat_1.json"
+  }
+}
+```
+
+```bash
+npm run build:dev
+```
+
+| stat\_`{풀이버전}` |                                                         assets size                                                          |
+| :----------------: | :--------------------------------------------------------------------------------------------------------------------------: |
+|       stat_0       | <img alt="stat_0_profile" width=1280 src="https://github.com/user-attachments/assets/696e4cbd-f29f-4f53-8b06-129f409cd9b1"/> |
+|       stat_1       | <img alt="stat_0_profile" width=1280 src="https://github.com/user-attachments/assets/0ea30922-ea80-4922-9e3e-ba632a6e3a94"/> |
+
+bundle 크기가 절반 정도 감소됨.
