@@ -21,6 +21,7 @@ module.exports = {
     hot: true,
     open: true,
     openPage: ['perf-basecamp'],
+    port: 3000,
     historyApiFallback: true
   },
   devtool: 'source-map',
