@@ -186,3 +186,98 @@ npm run build:dev
 해당 테스트는 webpack dev server로 비교했지만 실제 배포할땐 배포 서버 설정에 따라 기능 제공여부가 달라짐.
 
 다행이 github pages service는 gzip 기능을 제공함.
+
+## 3. image optimization - image format, compression
+
+```bash
+npm i -D image-minimizer-webpack-plugin sharp
+```
+
+wepback 공식 사이트에서 소개하는 [이미지 최적화 플러그인](https://webpack.js.org/plugins/image-minimizer-webpack-plugin/#optimize-images-based-on-size) 설치
+
+최적화를 수행하기 위해선 라이브러리 설치가 필요한데, 총 3가지를 지원함(1개 더 있지만, deprecated 됨)
+
+svg 파일 형식만 지원하는 `svgo`를 제외한 `imagemin`, `sharp`라이브러리 중 하나를 선택
+
+풀이에선 별도의 모듈을 설치하는 것이 번거로워 `sharp`를 선택
+
+```js
+// webpack.config.js
+
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
+
+module.exports = {
+  module: {
+    rules: [
+      // {
+      //   test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+      //   loader: 'file-loader',
+      //   options: {
+      //     name: 'static/[name].[ext]'
+      //   }
+      // }
+      {
+        test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+        type: 'asset',
+        generator: {
+          filename: 'static/[name][ext]'
+        }
+      }
+    ]
+  },
+  optimization: {
+    minimizer: [
+      new ImageMinimizerPlugin({
+        test: /\.(eot|svg|ttf|woff|woff2|png|jpg)$/i,
+        generator: [
+          {
+            preset: 'webp',
+            implementation: ImageMinimizerPlugin.sharpGenerate,
+            options: {
+              encodeOptions: {
+                webp: {}
+              }
+            }
+          }
+        ]
+      })
+    ]
+  }
+};
+```
+
+`ImageMinimizerPlugin`에서 최적화 결과물 위치를 지정해주기 위해 file-loader 대신 내장 asset 모듈 사용
+
+preset을 사용하여 webp 확장자로 geneator할 파일의 식별자 지정(꼭 webp로 할 필요 없음)
+
+generate할 파일 확장자를 encodeOptions.확장자 방식으로 설정(확장자마다 자세한 최적화 옵션은 [여기](https://sharp.pixelplumbing.com/api-output#jpeg) 참조)
+
+```tsx
+// Home.tsx
+
+// import heroImage from '../../assets/images/hero.png';
+const heroImage = new URL('../../assets/images/hero.png?as=webp&w=1280&h=auto', import.meta.url);
+```
+
+대상 파일 호출 경로에 식별자와 이미지 크기를 줄이기 위한 resize 설정을 query parameter에 지정
+
+```json
+// package.json
+
+{
+  "scripts": {
+    "build:dev": "webpack --mode=development --profile --json > stat_3.json"
+  }
+}
+```
+
+```bash
+npm run build:dev
+```
+
+| stat\_`{풀이버전}` |                                                         assets size                                                          |
+| :----------------: | :--------------------------------------------------------------------------------------------------------------------------: |
+|       stat_2       | <img alt="stat_2_profile" width=1280 src="https://github.com/user-attachments/assets/ad1df2a0-665a-4d4f-9b1a-97e045788efa"/> |
+|       stat_3       | <img alt="stat_3_profile" width=1280 src="https://github.com/user-attachments/assets/a2806915-0eaf-474d-ae07-3e11b86101f6"/> |
+
+bundle 크기가 10MB → 117KB 감소됨.
