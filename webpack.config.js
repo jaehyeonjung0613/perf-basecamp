@@ -6,6 +6,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 module.exports = {
   entry: './src/index.tsx',
@@ -54,17 +55,41 @@ module.exports = {
         test: /\.css$/i,
         use: [MiniCssExtractPlugin.loader, 'css-loader']
       },
+      // {
+      //   test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+      //   loader: 'file-loader',
+      //   options: {
+      //     name: 'static/[name].[ext]'
+      //   }
+      // }
       {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
-        loader: 'file-loader',
-        options: {
-          name: 'static/[name].[ext]'
+        type: 'asset',
+        generator: {
+          filename: 'static/[name][ext]'
         }
       }
     ]
   },
   optimization: {
     minimize: true,
-    minimizer: [`...`, new CssMinimizerPlugin()]
+    minimizer: [
+      `...`,
+      new CssMinimizerPlugin(),
+      new ImageMinimizerPlugin({
+        test: /\.(eot|svg|ttf|woff|woff2|png|jpg)$/i,
+        generator: [
+          {
+            preset: 'webp',
+            implementation: ImageMinimizerPlugin.sharpGenerate,
+            options: {
+              encodeOptions: {
+                webp: {}
+              }
+            }
+          }
+        ]
+      })
+    ]
   }
 };
