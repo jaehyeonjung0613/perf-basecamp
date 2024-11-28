@@ -281,3 +281,114 @@ npm run build:dev
 |       stat_3       | <img alt="stat_3_profile" width=1280 src="https://github.com/user-attachments/assets/a2806915-0eaf-474d-ae07-3e11b86101f6"/> |
 
 bundle 크기가 10MB → 117KB 감소됨.
+
+## 4. Code Splitting
+
+### Home 페이지에서 불러오는 스크립트 리소스에 Search 페이지의 소스 코드가 포함되지 않아야 한다.
+
+```typescript
+// App.tsx
+
+// import Home from './pages/Home/Home';
+// import Search from './pages/Search/Search';
+import { lazy, Suspense } from 'react';
+
+const Home = lazy(() => import('./pages/Home/Home'));
+const Search = lazy(() => import('./pages/Search/Search'));
+
+const App = () => {
+  return (
+    <Router basename={'/perf-basecamp'}>
+      <NavBar />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<Search />} />
+        </Routes>
+      </Suspense>
+      <Footer />
+    </Router>
+  );
+};
+```
+
+필요 페이지 리소스만 불러오기 위해 각 페이지 컴포넌트 import 방식을 동적으로 변경.
+
+```json
+// package.json
+
+{
+  "scripts": {
+    "build:dev": "webpack --mode=development --profile --json > stat_4.json"
+  }
+}
+```
+
+```bash
+npm run build:dev
+```
+
+| stat\_`{풀이버전}` |                                                         chunks size                                                          |
+| :----------------: | :--------------------------------------------------------------------------------------------------------------------------: |
+|       stat_3       | <img alt="stat_3_profile" width=1280 src="https://github.com/user-attachments/assets/668e404b-e5e7-47b0-9d4d-595cebfedd52"/> |
+|       stat_4       | <img alt="stat_4_profile" width=1280 src="https://github.com/user-attachments/assets/fe234e45-3448-4ac3-82f3-b0ebc0677deb"/> |
+
+페이지 컴포넌트별 청크단위로 분리됨.
+
+### react-icons 패키지에서 실제로 사용하는 아이콘 리소스만 빌드 결과에 포함되어야 한다.
+
+```bash
+npm run serve
+```
+
+<img alt="result_4_1" src="https://github.com/user-attachments/assets/50828d17-4a51-4f91-b7dd-899e4e61cb1e"/>
+
+Search 페이지 리소스에서 사용하고 있는 `AiOutlineInfo, AiOutlineClosf, AiOutlineSearch` 아이콘 외에도 불필요한 아이콘을 불러오고 있음.
+
+```json
+// package.json
+
+{
+  "sideEffects": ["*.css"]
+}
+```
+
+렌더링 이후 동적 스타일 적용을위해 css 파일을 제외하고 그 외 소스파일을 sideEffects로 지정.
+
+```js
+// webpack.config.js
+
+module.exports = {
+  optimization: {
+    sideEffects: true,
+    usedExports: true
+  }
+};
+```
+
+package.json의 sideEffects를 적용하기 위해 sideEffects 옵션을 true로 설정.
+
+번들시 export될 모듈을 결정하기 위해 usedExports 옵션을 true로 설정.(production 환경에선 기본으로 true)
+
+```bash
+npm run serve
+```
+
+<img alt="result_4_2" src="https://github.com/user-attachments/assets/3b4c1bc2-0db9-4bf4-921c-2539148672ff"/>
+
+불필요한 아이콘이 사라짐.
+
+```bash
+npm run build:dev
+```
+
+| stat\_`{풀이버전}` |                                                         assets size                                                          |
+| :----------------: | :--------------------------------------------------------------------------------------------------------------------------: |
+|       stat_3       | <img alt="stat_3_profile" width=1280 src="https://github.com/user-attachments/assets/a2806915-0eaf-474d-ae07-3e11b86101f6"/> |
+|       stat_4       | <img alt="stat_4_profile" width=1280 src="https://github.com/user-attachments/assets/629f3e4d-a01e-448b-a722-078824657d01"/> |
+
+페이지 컴포넌트별 청크단위로 분리되어 청크 크기가 줄어든것이 한눈에 안보임.
+
+그래도 계산해보자면, 976kb > 331kb + 4kb + 16kb + 13kb + 5kb로.
+
+607kb 절약됨.
