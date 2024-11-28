@@ -1,5 +1,8 @@
 {
   "name": "frontend-performance-basecamp",
+  "sideEffects": [
+    "*.css"
+  ],
   "version": "0.0.0",
   "engines": {
     "node": ">=18.0.0"
@@ -7,7 +10,7 @@
   "description": "frontend-performance-basecamp",
   "main": "index.tsx",
   "scripts": {
-    "build:dev": "webpack --mode=development --profile --json > stat_3.json",
+    "build:dev": "webpack --mode=development --profile --json > stat_4.json",
     "build:prod": "webpack --mode=production --node-env=production",
     "watch": "webpack --watch",
     "serve": "webpack serve --mode=development",

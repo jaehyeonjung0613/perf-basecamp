@@ -90,6 +90,8 @@ module.exports = {
           }
         ]
       })
-    ]
+    ],
+    sideEffects: true,
+    usedExports: true
   }
 };
