@@ -10,7 +10,7 @@
   "description": "frontend-performance-basecamp",
   "main": "index.tsx",
   "scripts": {
-    "build:dev": "webpack --mode=development --profile --json > stat_4.json",
+    "build:dev": "webpack --mode=development --profile --json > stat_5.json",
     "build:prod": "webpack --mode=production --node-env=production",
     "watch": "webpack --watch",
     "serve": "webpack serve --mode=development",
