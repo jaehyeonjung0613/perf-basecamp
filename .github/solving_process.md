@@ -392,3 +392,87 @@ npm run build:dev
 그래도 계산해보자면, 976kb > 331kb + 4kb + 16kb + 13kb + 5kb로.
 
 607kb 절약됨.
+
+## 5. React Profiler
+
+```tsx
+//    GiftItem.tsx
+
+const GifItem = ({ imageUrl = '', title = '' }: GifItemProps) => {
+  return (
+    <Profiler
+      id="GiftItemProfiler"
+      onRender={(id, phase, actualTime, baseTime, startTime, commitTime) =>
+        console.table({ id, phase, actualTime, baseTime, startTime, commitTime })
+      }
+    >
+      <div className={styles.gifItem}>
+        <img className={styles.gifImage} src={imageUrl} />
+        <div className={styles.gifTitleContainer}>
+          <div className={styles.gifTitleBg}></div>
+          <h4 className={styles.gifTitle}>{title}</h4>
+        </div>
+      </div>
+    </Profiler>
+  );
+};
+```
+
+<img alt="react_developer_tools_01" src="https://github.com/user-attachments/assets/38ede6df-ae5d-44af-8444-5033c2366b6e"/>
+
+[react_developer_tools](https://chromewebstore.google.com/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi?hl=en) 크롬 확장프로그램 설치.
+
+<img alt="react_developer_tools_02" src="https://github.com/user-attachments/assets/bc41eada-dbb9-4e67-80d2-07a4877e2f84"/>
+
+DevTools > Profile 탭에서 옵션버튼 클릭.
+
+렌더링된(Mount or Update) 컴포넌트를 표시하기 위한 설정 체크.
+
+<img alt="result_5_1" src="https://github.com/user-attachments/assets/65fd1e51-fe72-4c17-9a5c-5bfbb2da50fd"/>
+
+<br />
+
+<img alt="result_5_2" src="https://github.com/user-attachments/assets/418bfbcd-2254-4cf2-b397-8914bdf7c101"/>
+
+브라우저 DevTool 열어둔 상태에서 Search 페이지에서 load more 클릭.
+
+이전 GiftItem 컴포넌트도 재렌더링됨.
+
+```tsx
+// GiftItem.tsx
+
+import { memo, Profiler } from 'react';
+
+export default memo(GifItem);
+```
+
+GiftItem 컴포넌트 메모제이션(Memoization) 설정.
+
+<img alt="result_5_4" src="https://github.com/user-attachments/assets/827ab16e-a4ed-4b5f-9e98-4e5d898c0c71"/>
+
+<br />
+
+<img alt="result_5_5" src="https://github.com/user-attachments/assets/e181f16a-b792-4a8b-a421-66b0cb6d332b"/>
+
+추가 로드시 이전 GiftItem 컴포넌트가 재렌더링에서 제외됨.
+
+```json
+// package.json
+
+{
+  "scripts": {
+    "build:dev": "webpack --mode=development --profile --json > stat_5.json"
+  }
+}
+```
+
+```bash
+npm run build:dev
+```
+
+| stat\_`{풀이버전}` |                                                       assets size                                                        |
+| :----------------: | :----------------------------------------------------------------------------------------------------------------------: |
+|       stat_4       | <img alt="result_5_3" width=1280 src="https://github.com/user-attachments/assets/fec44d3f-c6aa-4df7-b2a2-92bdc4bbfef9"/> |
+|       stat_5       | <img alt="result_5_6" width=1280 src="https://github.com/user-attachments/assets/021a4941-f1b3-409f-b056-ef8080fba898"/> |
+
+이전과 비교했을때 메모제이션(Memoization)으로 인해 회색부분(렌더링 x)으로 변함.
