@@ -11,7 +11,7 @@ import FeatureItem from './components/FeatureItem/FeatureItem';
 import CustomCursor from './components/CustomCursor/CustomCursor';
 import AnimatedPath from './components/AnimatedPath/AnimatedPath';
 
-const heroImage = new URL('../../assets/images/hero.png?as=webp&w=1280&h=auto', import.meta.url);
+const heroImage = new URL('../../assets/images/hero.png?as=webp&w=1024&h=auto', import.meta.url);
 
 import styles from './Home.module.css';
 
@@ -23,7 +23,12 @@ const Home = () => {
   return (
     <>
       <section className={styles.heroSection}>
-        <img className={styles.heroImage} src={heroImage.href} alt="hero image" />
+        <img
+          className={styles.heroImage}
+          src={heroImage.href}
+          alt="hero image"
+          fetchpriority="high"
+        />
         <div className={styles.projectTitle}>
           <h1 className={styles.title}>Memegle</h1>
           <h3 className={styles.subtitle}>gif search engine for you</h3>
