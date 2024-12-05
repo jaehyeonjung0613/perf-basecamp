@@ -476,3 +476,200 @@ npm run build:dev
 |       stat_5       | <img alt="result_5_6" width=1280 src="https://github.com/user-attachments/assets/021a4941-f1b3-409f-b056-ef8080fba898"/> |
 
 이전과 비교했을때 메모제이션(Memoization)으로 인해 회색부분(렌더링 x)으로 변함.
+
+## 6. CSS triggers
+
+### 6-1. Layout Shift 없이 애니메이션이 일어나야 한다.
+
+DevTools > Performance에서 Chrome CPU 6x slowdown Network Slow 4G로 성능 측정.
+
+페이지별 Layout shift 현상은 다음과 같다.
+
+**-- Home --**
+
+<img alt="result_6_1_1" src="https://github.com/user-attachments/assets/2bcda23a-5d15-4435-81bc-fef002173f90"/>
+
+동적으로 삽입된 콘텐츠(footer 이동)
+
+<img alt="result_6_1_2" src="https://github.com/user-attachments/assets/37f52950-f450-405e-9c21-2c8ac5daf4ea"/>
+
+FOIT / FOUT를 유발하는 웹 글꼴
+
+**-- Search --**
+
+<img alt="result_6_1_3" src="https://github.com/user-attachments/assets/d9f1aba2-1276-4a3b-86d0-3a6309c6c1d1"/>
+
+FOIT / FOUT를 유발하는 웹 글꼴
+
+<img alt="result_6_1_4" src="https://github.com/user-attachments/assets/cd8ab549-bbb4-44f1-9e35-e46b0e6e668c"/>
+
+동적으로 삽입된 콘텐츠(footer 이동)
+
+<img alt="result_6_1_5" src="https://github.com/user-attachments/assets/5b558d23-b884-4659-8f0b-c71437e62033"/>
+
+동적으로 삽입된 콘텐츠(section 크기변경)
+
+---
+
+```plaintext
+[공통] - 동적으로 삽입된 콘텐츠(footer 이동)
+[공통] - FOIT / FOUT를 유발하는 웹 글꼴
+[search] - 동적으로 삽입된 콘텐츠(section 크기변경)
+```
+
+총 3가지의 유형의 Layout shift 발생.
+
+```tsx
+// App.tsx
+
+const App = () => {
+  return (
+    <Router basename={'/perf-basecamp'}>
+      <NavBar />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<Search />} />
+        </Routes>
+        <Footer />
+      </Suspense>
+    </Router>
+  );
+};
+```
+
+동적 페이지와 함께 footer 컴포넌트가 로드되도록 수정.
+
+```html
+<!-- index.html -->
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,400;0,700;1,400;1,700&display=block"
+  rel="stylesheet"
+/>
+```
+
+font display swap으로 인한 FOIT / FOUT 방지.
+
+```css
+/* SearchResult.module.css */
+
+/* 해상도 480px ~ 767px*/
+@media all and (max-width: 767px) {
+  .searchResultSection {
+    width: 480px;
+  }
+}
+
+/* 해상도 768px ~ 1023px */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .searchResultSection {
+    width: 768px;
+  }
+}
+
+/* 해상도 1024px ~ 1180px */
+@media all and (min-width: 1024ppx) and (max-width: 1279px) {
+  .searchResultSection {
+    width: 1024px;
+  }
+}
+
+/* 해상도 1280px */
+@media all and (min-width: 1280px) {
+  .searchResultSection {
+    width: 1180px;
+  }
+}
+
+.searchResultSection {
+  min-height: 90vh;
+  min-width: 480px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+```
+
+section 크기변경은 반응형 디바이스 별 해상도 분기점을 지정하여 크기가 고정되도록 설정.
+
+**-- Home --**
+
+<img alt="result_6_1_6" src="https://github.com/user-attachments/assets/336df172-a677-4888-a178-bc0a24dccbf4"/>
+
+**-- Search --**
+
+<img alt="result_6_1_7" src="https://github.com/user-attachments/assets/f2427dcf-6e4a-40e8-814b-1cd09b3ca07a"/>
+
+---
+
+Layout Shfit 사라짐.
+
+### 6-2. Frame Drop이 일어나지 않아야 한다.
+
+<img alt="result_6_2_1" src="https://github.com/user-attachments/assets/3fe0f27b-5dbb-49cd-a373-75d813d3add8"/>
+
+Home 페이지에서 hero 이미지를 로드하는 과정에서 Partially Presented Frame 발생.
+
+```tsx
+// Home.tsx
+
+const heroImage = new URL('../../assets/images/hero.png?as=webp&w=1024&h=auto', import.meta.url);
+
+const Home = () => {
+  const wrapperRef = useRef<HTMLElement>(null);
+
+  return (
+    <>
+      <section className={styles.heroSection}>
+        <img
+          className={styles.heroImage}
+          src={heroImage.href}
+          alt="hero image"
+          fetchpriority="high"
+        />
+      </section>
+    </>
+  );
+};
+```
+
+```ts
+// images.d.ts
+
+declare module React {
+  interface ImgHTMLAttributes<T> extends HTMLAttributes<T> {
+    fetchpriority?: 'high' | 'low' | 'auto';
+  }
+}
+```
+
+이미지 크기를 1280 → 1024로 줄여 로드 속도 개선.
+
+hero 로드 우선순위를 높게 지정하여, 처리가 지연되지 않도록 fetchpriority 설정.
+
+React에서 제공하는 fetchPriority 설정이 있긴 하지만, 현재 사용하면 warning 경고가 발생하기 때문에 커스텀 속성 사용.(React 19에 고쳐진다는 얘기가...)
+
+<img alt="result_6_2_2" src="https://github.com/user-attachments/assets/cc0c3055-1ca7-41ed-8422-8fbca9312b45"/>
+
+Partially Presented Frame 사라짐.
+
+```json
+// package.json
+
+{
+  "scripts": {
+    "build:dev": "webpack --mode=development --profile --json > stat_6.json"
+  }
+}
+```
+
+```bash
+npm run build:dev
+```
+
+| stat\_`{풀이버전}` |                                                         assets size                                                          |
+| :----------------: | :--------------------------------------------------------------------------------------------------------------------------: |
+|       stat_5       | <img alt="stat_5_profile" width=1280 src="https://github.com/user-attachments/assets/b69ef0c7-18a9-4955-a4b2-48184f336d53"/> |
+|       stat_6       | <img alt="stat_6_profile" width=1280 src="https://github.com/user-attachments/assets/f7ea9370-4c66-41e0-a9f0-552c705a1a65"/> |
+
+이미지 117kb → 82kb로 감소.
