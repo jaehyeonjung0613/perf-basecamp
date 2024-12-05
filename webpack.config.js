@@ -25,6 +25,7 @@ module.exports = {
     port: 3000,
     historyApiFallback: true
   },
+  cache: false,
   devtool: 'source-map',
   plugins: [
     new HtmlWebpackPlugin({
@@ -77,7 +78,6 @@ module.exports = {
       `...`,
       new CssMinimizerPlugin(),
       new ImageMinimizerPlugin({
-        test: /\.(eot|svg|ttf|woff|woff2|png|jpg)$/i,
         generator: [
           {
             preset: 'webp',
