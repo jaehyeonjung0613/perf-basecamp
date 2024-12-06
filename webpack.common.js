@@ -21,7 +21,10 @@ module.exports = {
       template: './index.html'
     }),
     new CopyWebpackPlugin({
-      patterns: [{ from: './public', to: './public' }]
+      patterns: [
+        { from: './public', to: './public' },
+        { from: './404.html', to: './404.html' }
+      ]
     }),
     new Dotenv(),
     new MiniCssExtractPlugin({
