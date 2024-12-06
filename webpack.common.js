@@ -5,7 +5,6 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin');
 const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 module.exports = {
@@ -14,18 +13,8 @@ module.exports = {
   output: {
     filename: 'bundle.js',
     path: path.join(__dirname, '/dist'),
-    clean: true,
-    publicPath: '/'
+    clean: true
   },
-  devServer: {
-    compress: true,
-    hot: true,
-    open: true,
-    openPage: ['perf-basecamp'],
-    port: 3000,
-    historyApiFallback: true
-  },
-  cache: false,
   devtool: 'source-map',
   plugins: [
     new HtmlWebpackPlugin({
@@ -38,9 +27,6 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css'
-    }),
-    new CompressionPlugin({
-      test: /\.*(\?.*)?$/i
     })
   ],
   module: {
