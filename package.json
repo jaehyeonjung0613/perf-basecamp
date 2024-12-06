@@ -8,7 +8,7 @@
     "node": ">=18.0.0"
   },
   "description": "frontend-performance-basecamp",
-  "main": "index.tsx",
+  "main": "index.html",
   "scripts": {
     "build:dev": "webpack --mode=development --profile --json > stat_6.json",
     "build:prod": "webpack --mode=production --node-env=production",
